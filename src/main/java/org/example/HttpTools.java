@@ -12,39 +12,41 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-public class SecMain {
-    private HttpResponse<String> httpResponse;
-    private String url = "http://api.nbp.pl/api/exchangerates/tables/A/";
+public class HttpTools {
+    private static final String[] url = {"http://api.nbp.pl/api/exchangerates/tables/A/", "http://api.nbp.pl/api/exchangerates/tables/B/"};
 
-    public void apiNBP() {
+    public static int getUrlLength() {
+        return url.length;
+    }
+
+    public String apiNBP(int i) {
         HttpClient httpClient = HttpClient.newHttpClient();
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .header("Accept", "application/json")
-                    .uri(new URI(url))
+                    .uri(new URI(url[i]))
                     .build();
-            httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println(httpResponse.body());
+            HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return httpResponse.body();
         } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-    public void processResponse(){
+
+    public void processResponse(String httpResponse){
             Gson gson = new Gson();
-            JsonArray jsonArray = gson.fromJson(httpResponse.body(), JsonArray.class);
+            JsonArray jsonArray = gson.fromJson(httpResponse, JsonArray.class);
             JsonObject jsonObject = jsonArray.get(0).getAsJsonObject();
             JsonArray ratesArray = jsonObject.getAsJsonArray("rates");
             for (JsonElement rateElement : ratesArray) {
                 JsonObject rateObject = rateElement.getAsJsonObject();
                 String code = rateObject.get("code").getAsString();
                 double value = rateObject.get("mid").getAsDouble();
+                System.out.printf("Kod waluty: %s, kurs: %.4f\n", code, value);
             }
         }
 
     public static void main(String[] args) {
-        SecMain secMain = new SecMain();
-        secMain.apiNBP();
-        secMain.processResponse();
 
     }
 }

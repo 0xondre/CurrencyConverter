@@ -1,17 +1,13 @@
 package org.example;
 
-
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 public class Main {
-
     public static void main(String[] args) {
+        HttpTools httpTools = new HttpTools();
+        int i = 0;
+        while(i<HttpTools.getUrlLength()){
+            httpTools.processResponse(httpTools.apiNBP(i));
+            i++;
+        }
 
     }
 }
