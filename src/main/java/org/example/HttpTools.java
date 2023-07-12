@@ -5,18 +5,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 
 public class HttpTools {
-    private static final String[] url = {"http://api.nbp.pl/api/exchangerates/tables/A/", "http://api.nbp.pl/api/exchangerates/tables/B/"};
+    private static final String[] URL = {"http://api.nbp.pl/api/exchangerates/tables/A/", "http://api.nbp.pl/api/exchangerates/tables/B/"};
 
     public static int getUrlLength() {
-        return url.length;
+        return URL.length;
     }
 
     public String apiNBP(int i) {
@@ -24,7 +27,7 @@ public class HttpTools {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .header("Accept", "application/json")
-                    .uri(new URI(url[i]))
+                    .uri(new URI(URL[i]))
                     .build();
             HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             return httpResponse.body();
@@ -33,20 +36,26 @@ public class HttpTools {
         }
     }
 
-    public void processResponse(String httpResponse){
-            Gson gson = new Gson();
-            JsonArray jsonArray = gson.fromJson(httpResponse, JsonArray.class);
-            JsonObject jsonObject = jsonArray.get(0).getAsJsonObject();
-            JsonArray ratesArray = jsonObject.getAsJsonArray("rates");
+    public void processResponse(String httpResponse, HashMap<String, Double> currencyMap) {
+        Gson gson = new Gson();
+        JsonArray jsonArray = gson.fromJson(httpResponse, JsonArray.class);
+        JsonObject jsonObject = jsonArray.get(0).getAsJsonObject();
+        JsonArray ratesArray = jsonObject.getAsJsonArray("rates");
+        FileWriter fileWriter;
+        try {
+            fileWriter = new FileWriter("logs.txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        PrintWriter printWriter = new PrintWriter(fileWriter);
             for (JsonElement rateElement : ratesArray) {
                 JsonObject rateObject = rateElement.getAsJsonObject();
                 String code = rateObject.get("code").getAsString();
                 double value = rateObject.get("mid").getAsDouble();
-                System.out.printf("Kod waluty: %s, kurs: %.4f\n", code, value);
+                currencyMap.put(code, value);
+
+                printWriter.printf("Currency code: %s, value: %.4f\n", code, value);
             }
         }
 
-    public static void main(String[] args) {
-
-    }
 }
